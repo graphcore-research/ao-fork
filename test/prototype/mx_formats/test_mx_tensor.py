@@ -220,6 +220,23 @@ def test_view(elem_dtype):
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+@pytest.mark.parametrize("elem_dtype", [DTYPE_FP6_E2M3, DTYPE_FP6_E3M2])
+@pytest.mark.parametrize("do_fp6_packing", [False, True])
+def test_fp6_packing(elem_dtype, do_fp6_packing):
+    config.pack_fp6 = do_fp6_packing
+    x = torch.randn(1, 2, 4, device="cuda")
+    block_size = 4
+    x_mx = MXTensor.to_mx(x, elem_dtype, block_size)
+    if config.pack_fp6:
+        expected_packed_shape = torch.Size([*x.shape[:-1], 3 * x.shape[-1] // 4])
+    else:
+        expected_packed_shape = x.shape
+    config.pack_fp6 = True
+
+    assert x_mx._data.shape == expected_packed_shape
+    
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 @pytest.mark.skipif(
     is_sm_at_least_100(), reason="triton does not work yet on CUDA capability 10.0"
 )

@@ -59,7 +59,7 @@ def test_linear_eager(elem_dtype, bias, input_shape):
         nn.Linear(8, 8, bias=bias, device="cuda"),
     )
     m_mx = copy.deepcopy(m)
-    block_size = 2
+    block_size = 4
     swap_linear_with_mx_linear(m_mx, *elem_dtype, block_size=block_size)
 
     x_ref = torch.randn(*input_shape, device="cuda").requires_grad_()
@@ -94,10 +94,10 @@ def test_activation_checkpointing():
     elem_dtype = torch.float8_e4m3fn
 
     m = nn.Sequential(
-        nn.Linear(4, 6, bias=True, device="cuda"),
-        nn.Linear(6, 6, bias=True, device="cuda"),
+        nn.Linear(4, 8, bias=True, device="cuda"),
+        nn.Linear(8, 8, bias=True, device="cuda"),
     )
-    block_size = 2
+    block_size = 4
     swap_linear_with_mx_linear(m, elem_dtype, block_size=block_size)
 
     x = torch.randn(*input_shape, device="cuda").requires_grad_()
@@ -133,7 +133,7 @@ def test_linear_compile(elem_dtype, bias, use_autocast):
     m_mx = nn.Sequential(
         nn.Linear(K, N, bias=bias, device="cuda"),
     )
-    block_size = 2
+    block_size = 4
     swap_linear_with_mx_linear(m_mx, elem_dtype, block_size=block_size)
     m_mx_c = copy.deepcopy(m_mx)
     m_mx_c = torch.compile(m_mx_c, fullgraph=True, backend="inductor")
@@ -188,7 +188,6 @@ def test_inference_linear(elem_dtype, bias, input_shape):
     y_ref = m(x)
     y_mx = m_mx(x)
     sqnr = compute_error(y_ref, y_mx)
-    print(sqnr)
     if elem_dtype is torch.float8_e4m3fn:
         assert sqnr >= 20.0
     else:

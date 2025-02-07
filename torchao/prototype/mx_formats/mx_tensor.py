@@ -45,14 +45,14 @@ from torchao.prototype.mx_formats.custom_cast import (
     f4_unpacked_to_f32,
     f6_e2m3_unpacked_to_f32,
     f6_e3m2_unpacked_to_f32,
-    triton_f6_e2m3_to_scaled_bf16,
-    triton_f6_e3m2_to_scaled_bf16,
     f32_to_f4_unpacked,
     f32_to_f6_e2m3_unpacked,
     f32_to_f6_e3m2_unpacked,
     pack_uint4,
     pack_uint6,
     triton_f4_to_scaled_bf16,
+    triton_f6_e2m3_to_scaled_bf16,
+    triton_f6_e3m2_to_scaled_bf16,
     unpack_uint4,
 )
 
