@@ -378,6 +378,15 @@ if has_triton():
         output = output.to(tl.bfloat16)
         return output
 
+    @triton.autotune(
+        configs=[
+            triton.Config({"BLOCK_SIZE_IN": 2}, num_warps=1),
+            triton.Config({"BLOCK_SIZE_IN": 4}, num_warps=1),
+            triton.Config({"BLOCK_SIZE_IN": 8}, num_warps=1),
+            triton.Config({"BLOCK_SIZE_IN": 16}, num_warps=1),
+        ],
+        key=["n_mx_blocks"],
+    )
     @triton.jit
     def triton_f6_to_bf16_kernel(
         x_ptr,
@@ -785,7 +794,7 @@ def triton_f6_e2m3_to_bf16(x: torch.Tensor) -> torch.Tensor:
     assert x.is_cuda and output.is_cuda
 
     n_mx_blocks = x.shape[0]
-    grid = lambda meta: (triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE"]),)
+    grid = lambda meta: (triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE_IN"]),)
     triton_f6_to_bf16_kernel[grid](
         x,
         output,
@@ -821,7 +830,7 @@ def triton_f6_e3m2_to_bf16(x: torch.Tensor) -> torch.Tensor:
     assert x.is_cuda and output.is_cuda
 
     n_mx_blocks = x.shape[0]
-    grid = lambda meta: (triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE"]),)
+    grid = lambda meta: (triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE_IN"]),)
     triton_f6_to_bf16_kernel[grid](
         x,
         output,
