@@ -22,7 +22,7 @@ from typing import Any, Dict
 import torch
 from torch.utils._pytree import tree_map
 
-from torchao.prototype.mx_formats.constants import DTYPE_FP4, DTYPE_FP6_E3M2, DTYPE_FP6_E2M3
+from torchao.prototype.mx_formats.constants import DTYPE_FP4, DTYPE_FP6_E2M3, DTYPE_FP6_E3M2
 from torchao.prototype.mx_formats.mx_tensor import (  # noqa: E501
     MXTensor,
     tensor_size_hpx3_to_fp6x4,
