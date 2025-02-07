@@ -117,22 +117,28 @@ def test_exponent_nan_out(elem_dtype):
     scale_e8m0_bits = torch.tensor(
         [E8M0_EXPONENT_NAN_VAL, 23], dtype=torch.uint8, device="cuda"
     )
-    
+
     block_size = 4
 
     if elem_dtype in (torch.float8_e4m3fn, torch.float8_e5m2):
-        data_bits = torch.tensor([0, 1, 2, 3, 4, 5, 6, 7], dtype=elem_dtype, device="cuda")  # noqa: E501
+        data_bits = torch.tensor(
+            [0, 1, 2, 3, 4, 5, 6, 7], dtype=elem_dtype, device="cuda"
+        )  # noqa: E501
     elif elem_dtype in (DTYPE_FP6_E2M3, DTYPE_FP6_E3M2):
-        data_bits = torch.tensor([0, 1, 2, 3, 4, 5, 6, 7], dtype=torch.uint8, device="cuda")  # noqa: E501
+        data_bits = torch.tensor(
+            [0, 1, 2, 3, 4, 5, 6, 7], dtype=torch.uint8, device="cuda"
+        )  # noqa: E501
         if config.pack_fp6:
             data_bits = data_bits.reshape(-1, block_size)
             data_bits = pack_uint6(data_bits)
     elif elem_dtype == DTYPE_FP4:
-        data_bits = torch.tensor([0, 1, 2, 3, 4, 5, 6, 7], dtype=torch.uint8, device="cuda")  # noqa: E501
+        data_bits = torch.tensor(
+            [0, 1, 2, 3, 4, 5, 6, 7], dtype=torch.uint8, device="cuda"
+        )  # noqa: E501
         data_bits = pack_uint4(data_bits)
     else:
         raise AssertionError("unsupported")
-    
+
     tensor_mx = MXTensor(
         scale_e8m0_bits, data_bits, elem_dtype, block_size, torch.float
     )
@@ -234,7 +240,7 @@ def test_fp6_packing(elem_dtype, do_fp6_packing):
     config.pack_fp6 = True
 
     assert x_mx._data.shape == expected_packed_shape
-    
+
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 @pytest.mark.skipif(

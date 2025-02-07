@@ -347,9 +347,9 @@ if has_triton():
         # instead we can interleave(interleave(4*i, 4*i+2), interleave(4*i+1, 4*i+3))
         # TODO: is there a more performant way?
         # We could stack all 4, then transpose and ravel and do it that way?
-        x_02 = tl.interleave(x_0, x_2) # [x_0_0, x_2_0, x_0_1, x_2_1, ...]
-        x_13 = tl.interleave(x_1, x_3) # [x_1_0, x_3_0, x_1_1, x_3_1, ...]
-        x = tl.interleave(x_02, x_13) # [x_0_0, x_1_0, x_2_0, x_3_0, x_0_1, ...]
+        x_02 = tl.interleave(x_0, x_2)  # [x_0_0, x_2_0, x_0_1, x_2_1, ...]
+        x_13 = tl.interleave(x_1, x_3)  # [x_1_0, x_3_0, x_1_1, x_3_1, ...]
+        x = tl.interleave(x_02, x_13)  # [x_0_0, x_1_0, x_2_0, x_3_0, x_0_1, ...]
 
         # save the sign
         sign_f6 = x & sign_mask_f6
@@ -397,13 +397,21 @@ if has_triton():
 
         offsets_rows = block_start + tl.arange(0, BLOCK_SIZE_IN)
         offsets_cols = tl.arange(0, packed_mx_block_size // 3)
-        mask_in = (offsets_rows[:, None] < n_mx_blocks) & (offsets_cols[None, :] < packed_mx_block_size // 3)
-        offsets_in = offsets_rows[:, None] * packed_mx_block_size + offsets_cols[None, :]
+        mask_in = (offsets_rows[:, None] < n_mx_blocks) & (
+            offsets_cols[None, :] < packed_mx_block_size // 3
+        )
+        offsets_in = (
+            offsets_rows[:, None] * packed_mx_block_size + offsets_cols[None, :]
+        )
 
         # packed 4 x fp6 into 3 x uint8
         packed_4bits_a = tl.load(x_ptr + offsets_in, mask=mask_in, other=0)
-        packed_4bits_b = tl.load(x_ptr + offsets_in + (packed_mx_block_size // 3), mask=mask_in, other=0)
-        packed_2bits = tl.load(x_ptr + offsets_in + (2 * packed_mx_block_size // 3), mask=mask_in, other=0)
+        packed_4bits_b = tl.load(
+            x_ptr + offsets_in + (packed_mx_block_size // 3), mask=mask_in, other=0
+        )
+        packed_2bits = tl.load(
+            x_ptr + offsets_in + (2 * packed_mx_block_size // 3), mask=mask_in, other=0
+        )
 
         output = _fp6_packed_to_bf16(
             packed_4bits_a,
@@ -416,11 +424,15 @@ if has_triton():
             f32_exp_bias,
         )
 
-        # set up output offsets        
+        # set up output offsets
         offsets_rows_out = block_start + tl.arange(0, BLOCK_SIZE_IN)
         offsets_cols_out = tl.arange(0, mx_block_size)
-        offsets_out = offsets_rows_out[:, None] * mx_block_size + offsets_cols_out[None, :]
-        mask_out = (offsets_rows_out[:, None] < n_mx_blocks) & (offsets_cols_out[None, :] < mx_block_size)
+        offsets_out = (
+            offsets_rows_out[:, None] * mx_block_size + offsets_cols_out[None, :]
+        )
+        mask_out = (offsets_rows_out[:, None] < n_mx_blocks) & (
+            offsets_cols_out[None, :] < mx_block_size
+        )
 
         tl.store(output_ptr + offsets_out, output, mask=mask_out)
 
@@ -456,13 +468,21 @@ if has_triton():
 
         offsets_rows = block_start + tl.arange(0, BLOCK_SIZE_IN)
         offsets_cols = tl.arange(0, packed_mx_block_size // 3)
-        mask_in = (offsets_rows[:, None] < n_mx_blocks) & (offsets_cols[None, :] < packed_mx_block_size // 3)
-        offsets_in = offsets_rows[:, None] * packed_mx_block_size + offsets_cols[None, :]
+        mask_in = (offsets_rows[:, None] < n_mx_blocks) & (
+            offsets_cols[None, :] < packed_mx_block_size // 3
+        )
+        offsets_in = (
+            offsets_rows[:, None] * packed_mx_block_size + offsets_cols[None, :]
+        )
 
         # packed 4 x fp6 into 3 x uint8
         packed_4bits_a = tl.load(x_ptr + offsets_in, mask=mask_in, other=0)
-        packed_4bits_b = tl.load(x_ptr + offsets_in + (packed_mx_block_size // 3), mask=mask_in, other=0)
-        packed_2bits = tl.load(x_ptr + offsets_in + (2 * packed_mx_block_size // 3), mask=mask_in, other=0)
+        packed_4bits_b = tl.load(
+            x_ptr + offsets_in + (packed_mx_block_size // 3), mask=mask_in, other=0
+        )
+        packed_2bits = tl.load(
+            x_ptr + offsets_in + (2 * packed_mx_block_size // 3), mask=mask_in, other=0
+        )
 
         output = _fp6_packed_to_bf16(
             packed_4bits_a,
@@ -496,8 +516,12 @@ if has_triton():
         # set up output offsets
         offsets_rows_out = block_start + tl.arange(0, BLOCK_SIZE_IN)
         offsets_cols_out = tl.arange(0, mx_block_size)
-        offsets_out = offsets_rows_out[:, None] * mx_block_size + offsets_cols_out[None, :]
-        mask_out = (offsets_rows_out[:, None] < n_mx_blocks) & (offsets_cols_out[None, :] < mx_block_size)
+        offsets_out = (
+            offsets_rows_out[:, None] * mx_block_size + offsets_cols_out[None, :]
+        )
+        mask_out = (offsets_rows_out[:, None] < n_mx_blocks) & (
+            offsets_cols_out[None, :] < mx_block_size
+        )
 
         tl.store(output_ptr + offsets_out, output, mask=mask_out)
 
@@ -544,12 +568,24 @@ if has_triton():
         bits_packed_4_b = (x_3 >> 2) | ((x_2 << 2) & 0xF0)
         # Similarly pack 4 remaining 2-bit partial representations into one uint8
         # e.g. 000000ab, 0000cd00, 00ef0000, gh000000 --> abcdefgh
-        bits_packed_2 = (x_0 << 6) | ((x_1 << 4) & 0x30) | ((x_2 << 2) & 0xC) | (x_3  & 0x3)
+        bits_packed_2 = (
+            (x_0 << 6) | ((x_1 << 4) & 0x30) | ((x_2 << 2) & 0xC) | (x_3 & 0x3)
+        )
 
         # Store values in a uint8 tensor of length `3 * MX_BLOCK_SIZE / 4`
-        offsets_out_4_a = offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE + offsets_cols[None, :]
-        offsets_out_4_b = offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE + offsets_cols[None, :] + (MX_BLOCK_SIZE // 4)
-        offsets_out_2 = offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE + offsets_cols[None, :] + (MX_BLOCK_SIZE // 2)
+        offsets_out_4_a = (
+            offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE + offsets_cols[None, :]
+        )
+        offsets_out_4_b = (
+            offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE
+            + offsets_cols[None, :]
+            + (MX_BLOCK_SIZE // 4)
+        )
+        offsets_out_2 = (
+            offsets_rows[:, None] * PACKED_MX_BLOCK_SIZE
+            + offsets_cols[None, :]
+            + (MX_BLOCK_SIZE // 2)
+        )
 
         # Store into output tensor
         tl.store(
@@ -611,7 +647,6 @@ else:
         BLOCK_SIZE_IN,
     ):
         raise AssertionError("unsupported without triton")
-
 
     def triton_f6_to_bf16_kernel(
         x_ptr,
@@ -750,9 +785,7 @@ def triton_f6_e2m3_to_bf16(x: torch.Tensor) -> torch.Tensor:
     assert x.is_cuda and output.is_cuda
 
     n_mx_blocks = x.shape[0]
-    grid = lambda meta: (
-        triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE"]),
-    )
+    grid = lambda meta: (triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE"]),)
     triton_f6_to_bf16_kernel[grid](
         x,
         output,
@@ -788,9 +821,7 @@ def triton_f6_e3m2_to_bf16(x: torch.Tensor) -> torch.Tensor:
     assert x.is_cuda and output.is_cuda
 
     n_mx_blocks = x.shape[0]
-    grid = lambda meta: (
-        triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE"]),
-    )
+    grid = lambda meta: (triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE"]),)
     triton_f6_to_bf16_kernel[grid](
         x,
         output,
@@ -830,9 +861,7 @@ def triton_f6_e2m3_to_scaled_bf16(
     assert x.is_cuda and output.is_cuda
 
     n_mx_blocks = x.shape[0]
-    grid = lambda meta: (
-        triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE_IN"]),
-    )
+    grid = lambda meta: (triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE_IN"]),)
     triton_f6_to_scaled_bf16_kernel[grid](
         x,
         s_e8m0,
@@ -849,6 +878,7 @@ def triton_f6_e2m3_to_scaled_bf16(
         e8m0_exponent_nan_val=E8M0_EXPONENT_NAN_VAL,
     )
     return output
+
 
 @torch.library.custom_op("ao::triton_f6_e3m2_to_scaled_bf16", mutates_args=())
 def triton_f6_e3m2_to_scaled_bf16(
@@ -874,9 +904,7 @@ def triton_f6_e3m2_to_scaled_bf16(
     assert x.is_cuda and output.is_cuda
 
     n_mx_blocks = x.numel() // packed_mx_block_size
-    grid = lambda meta: (
-        triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE_IN"]),
-    )
+    grid = lambda meta: (triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE_IN"]),)
     triton_f6_to_scaled_bf16_kernel[grid](
         x,
         s_e8m0,
@@ -894,11 +922,13 @@ def triton_f6_e3m2_to_scaled_bf16(
     )
     return output
 
+
 @triton_f6_e3m2_to_scaled_bf16.register_fake
 def _(x, s_e8m0, mx_block_size):
     _padded_mx_block_size = 3 * mx_block_size // 4
     out_shape = (x.numel() // _padded_mx_block_size, mx_block_size)
     return torch.empty(*out_shape, device=x.device, dtype=torch.bfloat16)
+
 
 @triton_f6_e2m3_to_scaled_bf16.register_fake
 def _(x, s_e8m0, mx_block_size):
@@ -970,14 +1000,12 @@ def pack_uint6(uint8_data: torch.Tensor) -> torch.Tensor:
     mx_block_size = uint8_data.shape[-1]
     assert mx_block_size % 4 == 0
 
-    # effective mx block size since we're packing 2 fp4 into 1 uint8 
+    # effective mx block size since we're packing 2 fp4 into 1 uint8
     packed_mx_block_size = 3 * mx_block_size // 4
     packed_shape = [uint8_data.shape[0], packed_mx_block_size]
     n_mx_blocks = uint8_data.numel() // mx_block_size
 
-    grid = lambda meta: (
-        triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE_IN"]),
-    )
+    grid = lambda meta: (triton.cdiv(n_mx_blocks, meta["BLOCK_SIZE_IN"]),)
 
     # contiguous uint8 container in which we can store the unpacked tensor
     packed_uint8_data = torch.empty(

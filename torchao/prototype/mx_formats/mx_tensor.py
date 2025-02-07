@@ -180,7 +180,7 @@ def to_mx(
         data_lp = pack_uint4(data_lp)
     else:
         raise AssertionError("unsupported")
-    
+
     # Moved the reshape to later to simplify fp6 packing
     data_lp = data_lp.reshape(orig_shape)
 
@@ -417,9 +417,9 @@ class MXTensor(torch.Tensor):
         ):
             # this check is sometimes broken for FakeTensor
             # TODO investigate
-            assert (
-                target_numel == data_bits.numel()
-            ), f"{target_numel} != {data_bits.numel()}"
+            assert target_numel == data_bits.numel(), (
+                f"{target_numel} != {data_bits.numel()}"
+            )
 
         # `_scale_e8m0` has rank 1 and applies to a row-major memory layout of
         # `_data`
